@@ -21,6 +21,7 @@
  * @copyright  2021 Nina Herrmann and Justus Dieckmann, WWU
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_login();
@@ -84,21 +85,31 @@ $str = [
     'edit' => get_string('edit'),
     'delete' => get_string('delete'),
     'move_up' => get_string('move_up', 'tool_lifecycle'),
-    'move_down' => get_string('move_down', 'tool_lifecycle')
+    'move_down' => get_string('move_down', 'tool_lifecycle'),
 ];
 
-$amounts = (new \tool_lifecycle\processor())->get_count_of_courses_to_trigger_for_workflow($workflow->id);
-$displaytotaltriggered = !empty($triggers);
+$showcoursecounts = get_config('tool_lifecycle', 'showcoursecounts');
+if ($showcoursecounts) {
+    // On moodle instances with many courses the following call can be fatal, because each trigger
+    // check function will be called for every single course of the instance to determine how many
+    // courses will be triggered by the workflow/the specific trigger. This count is only being
+    // used to show the admin how many courses will be triggered, it has no functional aspect.
+    $amounts = (new \tool_lifecycle\processor())->get_count_of_courses_to_trigger_for_workflow($workflow->id);
+    $displaytotaltriggered = !empty($triggers);
+}
+
+$displaytriggers = [];
+$displaysteps = [];
 
 foreach ($triggers as $trigger) {
     // The array from the DB Function uses ids as keys.
     // Mustache cannot handle arrays which have other keys therefore a new array is build.
     // FUTURE: Nice to have Icon for each subplugin.
-
+    $trigger = (object)(array) $trigger; // Cast to normal object to be able to set dynamic properties.
     $actionmenu = new action_menu([
         new action_menu_link_secondary(
             new moodle_url(urls::EDIT_ELEMENT, ['type' => settings_type::TRIGGER, 'elementid' => $trigger->id]),
-            new pix_icon('i/edit', $str['edit']), $str['edit'])
+            new pix_icon('i/edit', $str['edit']), $str['edit']),
     ]);
     if ($iseditable) {
         $actionmenu->add(new action_menu_link_secondary(
@@ -108,17 +119,21 @@ foreach ($triggers as $trigger) {
         );
     }
     $trigger->actionmenu = $OUTPUT->render($actionmenu);
-    $trigger->automatic = $amounts[$trigger->sortindex]->automatic;
-    $displaytotaltriggered &= $trigger->automatic;
-    if ($trigger->automatic) {
-        $trigger->triggeredcourses = $amounts[$trigger->sortindex]->triggered;
-        $trigger->excludedcourses = $amounts[$trigger->sortindex]->excluded;
+    if ($showcoursecounts) {
+        $trigger->automatic = $amounts[$trigger->sortindex]->automatic;
+        $displaytotaltriggered &= $trigger->automatic;
+        if ($trigger->automatic) {
+            $trigger->triggeredcourses = $amounts[$trigger->sortindex]->triggered;
+            $trigger->excludedcourses = $amounts[$trigger->sortindex]->excluded;
+        }
     }
+    $displaytriggers[] = $trigger;
 }
 
 foreach ($steps as $step) {
+    $step = (object)(array) $step; // Cast to normal object to be able to set dynamic properties.
     $ncourses = $DB->count_records('tool_lifecycle_process',
-        array('stepindex' => $step->sortindex, 'workflowid' => $workflowid));
+        ['stepindex' => $step->sortindex, 'workflowid' => $workflowid]);
     $step->numberofcourses = $ncourses;
     if ($step->id == $stepid) {
         $step->selected = true;
@@ -126,7 +141,7 @@ foreach ($steps as $step) {
     $actionmenu = new action_menu([
         new action_menu_link_secondary(
             new moodle_url(urls::EDIT_ELEMENT, ['type' => settings_type::STEP, 'elementid' => $step->id]),
-            new pix_icon('i/edit', $str['edit']), $str['edit'])
+            new pix_icon('i/edit', $str['edit']), $str['edit']),
     ]);
     if ($iseditable) {
         $actionmenu->add(new action_menu_link_secondary(
@@ -150,11 +165,12 @@ foreach ($steps as $step) {
         }
     }
     $step->actionmenu = $OUTPUT->render($actionmenu);
+    $displaysteps[] = $step;
 }
 
-$arrayofcourses = array();
+$arrayofcourses = [];
 
-$url = new moodle_url(urls::WORKFLOW_DETAILS, array('wf' => $workflowid));
+$url = new moodle_url(urls::WORKFLOW_DETAILS, ['wf' => $workflowid]);
 
 $out = null;
 if ($stepid) {
@@ -175,16 +191,19 @@ $data = [
     'rollbackdelay' => format_time($workflow->rollbackdelay),
     'finishdelay' => format_time($workflow->finishdelay),
     'delayglobally' => $workflow->delayforallworkflows,
-    'trigger' => array_values($triggers),
-    'automatic' => $displaytotaltriggered,
-    'coursestriggered' => $amounts['all']->triggered,
-    'coursesexcluded' => $amounts['all']->excluded,
-    'coursesetsize' => $amounts['all']->coursesetsize,
-    'steps' => array_values($steps),
+    'trigger' => $displaytriggers,
+    'showcoursecounts' => $showcoursecounts,
+    'steps' => $displaysteps,
     'listofcourses' => $arrayofcourses,
     'nosteplink' => $nosteplink,
-    'table' => $out
+    'table' => $out,
 ];
+if ($showcoursecounts) {
+    $data['automatic'] = $displaytotaltriggered;
+    $data['coursestriggered'] = $amounts['all']->triggered;
+    $data['coursesexcluded'] = $amounts['all']->excluded;
+    $data['coursesetsize'] = $amounts['all']->coursesetsize;
+}
 
 echo $renderer->header();
 
@@ -205,15 +224,15 @@ if (workflow_manager::is_editable($workflow->id)) {
     $addinstance .= $OUTPUT->render_from_template('tool_lifecycle/warn_icon', $icondata);
 
     $addinstance .= $OUTPUT->single_select(new \moodle_url(urls::EDIT_ELEMENT,
-        array('type' => settings_type::TRIGGER, 'wf' => $workflow->id)),
-        'subplugin', $selectabletriggers, '', array('' => get_string('add_new_trigger_instance', 'tool_lifecycle')),
+        ['type' => settings_type::TRIGGER, 'wf' => $workflow->id]),
+        'subplugin', $selectabletriggers, '', ['' => get_string('add_new_trigger_instance', 'tool_lifecycle')],
         null, ['id' => 'tool_lifecycle-choose-trigger']);
 
     $steps = step_manager::get_step_types();
     $addinstance .= '<span class="ml-1"></span>';
     $addinstance .= $OUTPUT->single_select(new \moodle_url(urls::EDIT_ELEMENT,
-        array('type' => settings_type::STEP, 'wf' => $workflow->id)),
-        'subplugin', $steps, '', array('' => get_string('add_new_step_instance', 'tool_lifecycle')),
+        ['type' => settings_type::STEP, 'wf' => $workflow->id]),
+        'subplugin', $steps, '', ['' => get_string('add_new_step_instance', 'tool_lifecycle')],
         null, ['id' => 'tool_lifecycle-choose-step']);
     $data['addinstance'] = $addinstance;
 }
