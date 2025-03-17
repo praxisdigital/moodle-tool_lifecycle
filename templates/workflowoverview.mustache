@@ -129,9 +129,14 @@
                     </div>
                 </div>
                 <div class="wf-content">
-                    <a href="{{nosteplink}}&step={{id}}">{{icon}}{{name}}
-                    {{#str}} courses {{/str}}: {{numberofcourses}}
-                    </a>
+                    {{#numberofcourses}}
+                        <a href="{{nosteplink}}&step={{id}}">{{icon}}{{name}}
+                        {{#str}} courses {{/str}}: {{numberofcourses}}
+                        </a>
+                    {{/numberofcourses}}
+                    {{^numberofcourses}}
+                        {{#str}} courses {{/str}}: {{numberofcourses}}
+                    {{/numberofcourses}}
                 </div>
             </div>
         {{/steps}}

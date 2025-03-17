@@ -100,7 +100,7 @@ span.tool_lifecycle-hint {
 #lifecycle-workflow-details .courses-table {
     flex: 40% 1 1;
     border: 1px solid #bbb;
-    border-right: none;
+    margin-right: 2em;
 }
 
 #lifecycle-workflow-details .bar {

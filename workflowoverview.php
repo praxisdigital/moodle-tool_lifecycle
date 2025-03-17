@@ -117,10 +117,12 @@ $str = [
 
 $showcoursecounts = get_config('tool_lifecycle', 'showcoursecounts');
 if ($showcoursecounts) {
-    // On moodle instances with many courses the following call can be fatal, because each trigger
-    // check function will be called for every single course of the instance to determine how many
-    // courses will be triggered by the workflow/the specific trigger. This count is only being
-    // used to show the admin how many courses will be triggered, it has no functional aspect.
+    /*
+        On moodle instances with many courses the following call can be fatal, because each trigger
+        check function will be called for every single course of the instance to determine how many
+        courses will be triggered by the workflow/the specific trigger. This count is only being
+        used to show the admin how many courses will be triggered, it has no functional aspect.
+    */
     $amounts = (new \tool_lifecycle\processor())->get_count_of_courses_to_trigger_for_workflow($workflow->id);
     $displaytotaltriggered = !empty($triggers);
 }
