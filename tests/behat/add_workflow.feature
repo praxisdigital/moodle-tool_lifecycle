@@ -5,7 +5,7 @@ Feature: Add a workflow definition
   Scenario: Add a new workflow definition without steps
   For displaying the additional trigger settings the "Save changes" button is used.
     Given I log in as "admin"
-    And I navigate to "Plugins > Admin tools > Life Cycle > Workflow drafts" in site administration
+    And I am on workflowdrafts page
     And I click on "Create new workflow" "link"
     And I set the following fields to these values:
       | Title                      | My Workflow                               |
@@ -13,7 +13,7 @@ Feature: Add a workflow definition
     When I press "Save changes"
     Then I should see "Displayed to teachers as Teachers view on workflow"
     When I select "Manual trigger" from the "tool_lifecycle-choose-trigger" singleselect
-    Then I should see "Create trigger"
+    Then I should see "Settings of the trigger"
     When I set the following fields to these values:
       | Instance name              | My Trigger                                |
     And I press "Save changes"
@@ -33,7 +33,7 @@ Feature: Add a workflow definition
   Scenario: Add a new workflow definition with steps
   For displaying the additional trigger settings the "reload" button is used.
     Given I log in as "admin"
-    And I navigate to "Plugins > Admin tools > Life Cycle > Workflow drafts" in site administration
+    And I am on workflowdrafts page
     And I click on "Create new workflow" "link"
     And I set the following fields to these values:
       | Title                      | My Workflow                               |
@@ -56,7 +56,7 @@ Feature: Add a workflow definition
 
   Scenario: Add a new workflow definition and alter trigger
     Given I log in as "admin"
-    And I navigate to "Plugins > Admin tools > Life Cycle > Workflow drafts" in site administration
+    And I am on workflowdrafts page
     And I click on "Create new workflow" "link"
     And I set the following fields to these values:
       | Title                      | My Workflow                               |
@@ -89,7 +89,7 @@ Feature: Add a workflow definition
 
   Scenario: Add a new workflow definition with steps and rearange
     Given I log in as "admin"
-    And I navigate to "Plugins > Admin tools > Life Cycle > Workflow drafts" in site administration
+    And I am on workflowdrafts page
     And I click on "Create new workflow" "link"
     And I set the following fields to these values:
       | Title                      | My Workflow                               |
