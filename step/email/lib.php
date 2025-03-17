@@ -178,7 +178,7 @@ class email extends libbase {
         $coursesstring = '';
         $coursesstring .= $this->parse_course(array_pop($courses)->courseid);
         foreach ($courses as $entry) {
-            $coursesstring .= "\n" . $this->parse_course($entry->courseid);
+            $coursesstring .= "\r\n" . $this->parse_course($entry->courseid);
         }
         $replacements[] = $coursesstring;
 
