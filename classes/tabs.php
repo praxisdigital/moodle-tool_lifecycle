@@ -71,9 +71,18 @@ class tabs {
         $i = $DB->count_records_sql($sql);
         $deactivatedewf = \html_writer::span($i, $i > 0 ? $classnotnull : $classnull);
 
+        $time = time();
         // Get number of delayed courses.
-        $sql = "select count(id)
-        from {tool_lifecycle_delayed}";
+        $sql = "select count(c.id) from {course} c LEFT JOIN
+        (SELECT dw.courseid, dw.workflowid, w.title as workflow, dw.delayeduntil as workflowdelay,maxtable.wfcount as workflowcount
+         FROM ( SELECT courseid, MAX(dw.id) AS maxid, COUNT(*) AS wfcount FROM {tool_lifecycle_delayed_workf} dw
+            JOIN {tool_lifecycle_workflow} w ON dw.workflowid = w.id
+            WHERE dw.delayeduntil >= $time AND w.timeactive IS NOT NULL GROUP BY courseid ) maxtable JOIN
+             {tool_lifecycle_delayed_workf} dw ON maxtable.maxid = dw.id JOIN
+             {tool_lifecycle_workflow} w ON dw.workflowid = w.id ) wfdelay ON wfdelay.courseid = c.id LEFT JOIN
+            (SELECT * FROM {tool_lifecycle_delayed} d WHERE d.delayeduntil > $time ) d ON c.id = d.courseid JOIN
+            {course_categories} cat ON c.category = cat.id
+        where COALESCE(wfdelay.courseid, d.courseid) IS NOT NULL";
         $i = $DB->count_records_sql($sql);
         $delayedcourses = \html_writer::span($i, $i > 0 ? $classnotnull : $classnull);
 

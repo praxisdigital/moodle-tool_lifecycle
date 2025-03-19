@@ -56,7 +56,7 @@ class process_errors_table extends \table_sql {
                 'rollback' => get_string('rollback', 'tool_lifecycle'),
         ];
 
-        $fields = 'c.fullname as course, w.title as workflow, s.instancename as step, pe.*';
+        $fields = 'c.id, c.fullname as course, w.title as workflow, s.instancename as step, pe.*';
 
         $from = '{tool_lifecycle_proc_error} pe ' .
             'JOIN {tool_lifecycle_workflow} w ON pe.workflowid = w.id ' .
