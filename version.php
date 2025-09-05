@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die;
 
 $plugin->maturity = MATURITY_STABLE;
-$plugin->version  = 2025050405;
+$plugin->version  = 2025052700;
 $plugin->component = 'tool_lifecycle';
 $plugin->requires = 2022112800; // Requires Moodle 4.1+.
 $plugin->supported = [401, 405];
